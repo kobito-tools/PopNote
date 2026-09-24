@@ -1,0 +1,7 @@
+# ビルド成果物
+PopNote!.app/
+.build/
+
+# OS
+.DS_Store
+Thumbs.db

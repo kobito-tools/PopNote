@@ -1,0 +1,56 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1024" height="1024" viewBox="0 0 1024 1024">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#FF8DB5"/>
+      <stop offset="1" stop-color="#F0527F"/>
+    </linearGradient>
+    <linearGradient id="note" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#FFF08A"/>
+      <stop offset="1" stop-color="#FFD84A"/>
+    </linearGradient>
+    <linearGradient id="box" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#3FA7B0"/>
+      <stop offset="1" stop-color="#2A7F8C"/>
+    </linearGradient>
+  </defs>
+
+  <!-- 背景 -->
+  <rect x="100" y="100" width="824" height="824" rx="185" fill="url(#bg)"/>
+
+  <!-- ポンッの放射線 -->
+  <g stroke="#FFFFFF" stroke-width="22" stroke-linecap="round" opacity="0.9">
+    <path d="M232 262l52 40"/>
+    <path d="M196 402h66"/>
+    <path d="M792 262l-52 40"/>
+    <path d="M828 402h-66"/>
+  </g>
+
+  <!-- 紙吹雪 -->
+  <circle cx="282" cy="560" r="16" fill="#FFE066"/>
+  <circle cx="760" cy="540" r="14" fill="#FFFFFF"/>
+  <circle cx="330" cy="200" r="11" fill="#FFFFFF"/>
+  <circle cx="512" cy="140" r="12" fill="#FFFFFF"/>
+  <circle cx="712" cy="188" r="15" fill="#FFE066"/>
+  <rect x="740" y="640" width="26" height="26" rx="6" fill="#7FE0D6" transform="rotate(24 753 653)"/>
+  <rect x="236" y="660" width="24" height="24" rx="6" fill="#FFE066" transform="rotate(-20 248 672)"/>
+
+  <!-- バネ -->
+  <path d="M512 640l-54-26 108-26-108-26 108-26-108-26 54-26" fill="none" stroke="#FFFFFF" stroke-width="20" stroke-linecap="round" stroke-linejoin="round"/>
+
+  <!-- 付箋 -->
+  <g transform="rotate(-7 512 330)">
+    <path d="M362 190h300v250l-60 60H362z" fill="url(#note)"/>
+    <path d="M662 440l-60 60v-44a16 16 0 0 1 16-16z" fill="#F2B82C"/>
+    <g stroke="#E0A92A" stroke-width="14" stroke-linecap="round">
+      <path d="M408 270h208"/>
+      <path d="M408 330h208"/>
+      <path d="M408 390h140"/>
+    </g>
+  </g>
+
+  <!-- 箱 -->
+  <rect x="300" y="620" width="424" height="236" rx="30" fill="url(#box)"/>
+  <rect x="300" y="620" width="424" height="40" rx="20" fill="#5CC3C8"/>
+  <!-- 箱の星 -->
+  <path d="M512 690l18 38 42 5-31 29 8 41-37-20-37 20 8-41-31-29 42-5z" fill="#FFE066"/>
+</svg>

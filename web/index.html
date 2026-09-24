@@ -1,0 +1,37 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="referrer" content="no-referrer">
+  <title>PopNote!</title>
+  <link rel="stylesheet" href="/app.css">
+</head>
+<body>
+  <main id="memoApp" class="memo-app">
+    <header class="memo-head">
+      <button type="button" class="memo-title" data-mode="heading" title="見出しを編集（⌘H）"><span id="memoTitle"></span></button>
+      <p class="memo-meta"><time id="memoCreated"></time><span id="memoStatus" class="memo-status" role="status"></span></p>
+      <div id="memoTags" class="memo-tags" data-mode="tag" title="タグを設定（⌘T）"></div>
+    </header>
+    <div id="memoBody" class="memo-body" contenteditable="true" spellcheck="false" data-placeholder="ここに書き始めてください" aria-label="メモ本文"></div>
+    <footer class="memo-foot">
+      <button type="button" id="memoAttachmentCount" class="memo-attach-count" data-mode="attach"></button>
+      <nav class="memo-keys" aria-label="ショートカット">
+        <button type="button" data-command="new"><kbd>⌘</kbd><kbd>N</kbd>新規</button>
+        <button type="button" data-mode="list"><kbd>⌘</kbd><kbd>O</kbd>一覧</button>
+        <button type="button" data-mode="tag"><kbd>⌘</kbd><kbd>T</kbd>タグ</button>
+        <button type="button" data-mode="heading"><kbd>⌘</kbd><kbd>H</kbd>見出し</button>
+        <button type="button" data-mode="attach"><kbd>⌘</kbd><kbd>A</kbd>添付</button>
+        <span class="memo-key-sep"></span>
+        <button type="button" data-format="bold" title="ボールド（⌘B）"><b>B</b></button>
+        <button type="button" data-format="underline" title="下線（⌘U）"><u>U</u></button>
+        <button type="button" data-format="strikeThrough" title="取り消し線（⌘X）"><s>S</s></button>
+        <button type="button" data-format="italic" title="イタリック（⌘I）"><i>I</i></button>
+      </nav>
+    </footer>
+    <div id="memoPanel" class="memo-panel" hidden></div>
+  </main>
+  <script src="/app.js"></script>
+</body>
+</html>
