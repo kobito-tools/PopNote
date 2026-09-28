@@ -1,10 +1,11 @@
 #!/bin/zsh
 # PopNote!.appをこのフォルダ直下に作る。Xcode Command Line Tools（swiftc）が必要。
+# macOS 13以降：同梱のSQLiteがTomeletのDB（STRICT表）に対応している必要がある。
 set -euo pipefail
 cd "${0:A:h}"
 
 APP_NAME="PopNote!"
-VERSION="0.1.0"
+VERSION="0.2.0"
 BUILD_DIR=".build"
 STAGE="$BUILD_DIR/$APP_NAME.app"
 CONTENTS="$STAGE/Contents"
@@ -13,6 +14,10 @@ SDK="$(xcrun --sdk macosx --show-sdk-path)"
 rm -rf "$BUILD_DIR"
 mkdir -p "$CONTENTS/MacOS" "$CONTENTS/Resources"
 cp -R web "$CONTENTS/Resources/web"
+# 画面左上のアイコン（アプリのアイコンと同じ絵）。
+cp assets/icon/icon.svg "$CONTENTS/Resources/web/icon.svg"
+# Tomeletと同じDB更新。保存先に新しいデータを作るときに使う（scripts/sync-schema.shで更新）。
+cp -R schema "$CONTENTS/Resources/schema"
 cp assets/icon/AppIcon.icns "$CONTENTS/Resources/AppIcon.icns"
 
 cat > "$CONTENTS/Info.plist" <<PLIST
@@ -29,7 +34,7 @@ cat > "$CONTENTS/Info.plist" <<PLIST
 <key>CFBundlePackageType</key><string>APPL</string>
 <key>CFBundleShortVersionString</key><string>$VERSION</string>
 <key>CFBundleVersion</key><string>1</string>
-<key>LSMinimumSystemVersion</key><string>12.0</string>
+<key>LSMinimumSystemVersion</key><string>13.0</string>
 <key>NSHighResolutionCapable</key><true/>
 <key>NSAppTransportSecurity</key><dict><key>NSAllowsLocalNetworking</key><true/></dict>
 <key>CFBundleURLTypes</key><array><dict>
@@ -41,8 +46,8 @@ PLIST
 
 # Apple Silicon・Intelの両方で動くユニバーサルバイナリにする。
 for arch in arm64 x86_64; do
-  xcrun swiftc -sdk "$SDK" -target "$arch-apple-macosx12.0" -parse-as-library -O \
-    Sources/*.swift -framework Cocoa -framework WebKit -o "$BUILD_DIR/PopNote-$arch"
+  xcrun swiftc -sdk "$SDK" -target "$arch-apple-macosx13.0" -parse-as-library -O \
+    Sources/*.swift -framework Cocoa -framework WebKit -lsqlite3 -o "$BUILD_DIR/PopNote-$arch"
 done
 lipo -create "$BUILD_DIR/PopNote-arm64" "$BUILD_DIR/PopNote-x86_64" -output "$CONTENTS/MacOS/PopNote"
 codesign --force --sign - --timestamp=none "$STAGE"

@@ -10,8 +10,9 @@
 <body>
   <main id="memoApp" class="memo-app">
     <header class="memo-head">
+      <div class="memo-brand" aria-label="PopNote!"><img src="/icon.svg" alt=""><span>PopNote!</span></div>
       <button type="button" class="memo-title" data-mode="heading" title="見出しを編集（⌘H）"><span id="memoTitle"></span></button>
-      <p class="memo-meta"><time id="memoCreated"></time><span id="memoStatus" class="memo-status" role="status"></span></p>
+      <p class="memo-meta"><button type="button" id="memoDestination" class="memo-destination-chip" data-mode="destination"></button><time id="memoCreated"></time><span id="memoStatus" class="memo-status" role="status"></span><button type="button" class="memo-calendar-button" data-mode="calendar" title="カレンダーでメモを見る">📅 カレンダー</button></p>
       <div id="memoTags" class="memo-tags" data-mode="tag" title="タグを設定（⌘T）"></div>
     </header>
     <div id="memoBody" class="memo-body" contenteditable="true" spellcheck="false" data-placeholder="ここに書き始めてください" aria-label="メモ本文"></div>

@@ -8,6 +8,9 @@ kbd{display:inline-block;min-width:1.5em;padding:0 4px;border:1px solid var(--li
 
 .memo-app{height:100%;display:grid;grid-template-rows:auto minmax(0,1fr) auto;max-width:980px;margin:0 auto;padding:22px 28px 0}
 .memo-head{display:grid;gap:4px;padding-bottom:12px;border-bottom:1px solid var(--line)}
+.memo-brand{display:flex;align-items:center;gap:8px;margin-bottom:6px;user-select:none;-webkit-user-select:none}
+.memo-brand img{width:30px;height:30px;flex:none}
+.memo-brand span{font:800 17px/1 var(--font-display);letter-spacing:.01em;color:var(--coral)}
 .memo-title{justify-self:start;max-width:100%;border:0;background:none;padding:2px 6px;margin-left:-6px;border-radius:6px;text-align:left;font:700 22px/1.4 var(--font-display)}
 .memo-title:hover{background:var(--focus)}
 .memo-title span{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
@@ -77,3 +80,60 @@ kbd{display:inline-block;min-width:1.5em;padding:0 4px;border:1px solid var(--li
 .memo-card-actions .primary:focus-visible{outline:3px solid var(--focus)}
 
 @media (max-width:560px){.memo-app{padding:14px 16px 0}.memo-foot{flex-wrap:wrap}.memo-keys{margin-left:0;justify-content:flex-start}}
+
+/* 保存先 */
+.memo-destination-chip{display:inline-flex;align-items:center;gap:6px;border:1px solid var(--line);background:var(--surface);border-radius:999px;padding:1px 10px;font-size:11px;line-height:1.7;color:var(--ink);max-width:260px}
+.memo-destination-chip span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.memo-destination-chip small{color:var(--coral);font-size:10px;white-space:nowrap}
+.memo-destination-chip.missing{border-color:var(--coral);color:var(--coral);font-weight:600}
+.memo-destination-chip:hover{background:var(--focus)}
+.memo-calendar-button{border:0;background:none;color:var(--muted);font-size:11px;padding:2px 6px;border-radius:6px;white-space:nowrap}
+.memo-calendar-button:hover{background:var(--focus);color:var(--ink)}
+.memo-notice{margin:0 0 10px;padding:8px 10px;border-radius:8px;background:var(--focus);font-size:12px;line-height:1.6}
+.memo-destinations{list-style:none;margin:0;padding:0}
+.memo-destinations li{position:relative;display:grid;grid-template-columns:28px minmax(0,1fr) auto;align-items:center;gap:8px;padding:8px 32px 8px 10px;border-radius:8px;cursor:pointer}
+.memo-destinations li.active,.memo-destinations li:hover{background:var(--focus)}
+.memo-destinations li.unavailable{opacity:.55}
+.memo-destinations strong{display:block;font-size:13px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.memo-destinations small{display:block;color:var(--muted);font-size:10px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.memo-destinations em{font-style:normal;font-size:10px;color:#fff;background:var(--coral);border-radius:999px;padding:0 8px}
+.memo-destinations em.linked{background:#2f8f9d}
+.memo-destination-icon{font-size:16px;text-align:center}
+.memo-destinations .memo-delete{top:50%;transform:translateY(-50%)}
+.memo-destinations li:hover .memo-delete{opacity:.7}
+.memo-field{display:grid;gap:4px;font-size:11px;color:var(--muted)}
+.memo-card-actions button:not(.primary){border:1px solid var(--line);background:var(--paper);border-radius:7px;padding:7px 12px;font-size:12px;margin-left:6px}
+.memo-card:focus{outline:none}
+
+/* 一覧の並べ替え・絞り込み */
+.memo-list-tools{display:flex;flex-wrap:wrap;align-items:center;gap:8px 12px;margin-top:8px}
+.memo-list-tools label{display:flex;align-items:center;gap:6px;font-size:11px;color:var(--muted)}
+.memo-list-tools select{border:1px solid var(--line);border-radius:7px;background:var(--paper);color:var(--ink);padding:3px 6px;font:12px var(--font-ui)}
+.memo-tag-filter{display:flex;flex-wrap:wrap;align-items:center;gap:4px}
+.memo-tag-filter .memo-muted{margin:0 2px 0 0}
+.memo-tag-filter .memo-chip{cursor:pointer;background:transparent}
+.memo-tag-filter .memo-chip.selected{background:var(--chip);color:#fff;border-color:var(--chip)}
+.memo-list li.memo-group{display:flex;align-items:center;gap:6px;padding:10px 4px 2px;cursor:default;font-size:11px;font-weight:700;color:var(--muted);border-left:0}
+.memo-list li.memo-group:hover{background:none}
+.memo-list li.memo-group small{font-weight:400}
+
+/* カレンダー */
+.memo-calendar-card{width:min(720px,100%)}
+.memo-cal-head{display:flex;align-items:center;gap:6px;margin-bottom:8px}
+.memo-cal-head h2{margin:0 6px;font:700 16px var(--font-display);letter-spacing:0;color:var(--ink)}
+.memo-cal-head button{border:1px solid var(--line);background:var(--paper);border-radius:7px;min-width:30px;padding:2px 8px;font-size:13px}
+.memo-cal-head .memo-muted{margin:0 0 0 auto}
+.memo-cal-grid{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:3px}
+.memo-cal-weekday{font-size:10px;text-align:center;color:var(--muted);padding-bottom:2px}
+.memo-cal-weekday.sun{color:#d4506a}.memo-cal-weekday.sat{color:#4a7fc1}
+.memo-cal-cell{display:flex;flex-direction:column;align-items:stretch;gap:2px;min-height:58px;padding:4px;border:1px solid var(--line);border-radius:7px;background:var(--paper);text-align:left;overflow:hidden}
+.memo-cal-cell.blank{border:0;background:none}
+.memo-cal-cell b{font-size:11px;font-weight:600}
+.memo-cal-cell.today b{display:inline-grid;place-items:center;width:20px;height:20px;border-radius:50%;background:var(--coral);color:#fff}
+.memo-cal-cell.selected{border-color:var(--coral);box-shadow:0 0 0 2px var(--focus)}
+.memo-cal-cell:hover{border-color:var(--coral)}
+.memo-cal-item{display:block;font-size:9.5px;line-height:1.5;padding:0 4px;border-radius:4px;background:color-mix(in srgb,var(--chip) 16%,transparent);border-left:3px solid var(--chip);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.memo-cal-cell small{font-size:9px;color:var(--muted)}
+.memo-cal-day{margin-top:12px;border-top:1px solid var(--line);padding-top:8px}
+.memo-cal-day h3{margin:0 0 4px;font-size:12px}
+@media (max-width:560px){.memo-cal-cell{min-height:48px}.memo-cal-item{display:none}.memo-cal-cell.has-items::after{content:"•";color:var(--coral)}}

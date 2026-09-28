@@ -1,12 +1,13 @@
 import Cocoa
 import WebKit
 
-// PopNote! — 押したらポンッと出てくる、Tick Tock Tome連携のクイックメモ。
-// ランチャーやURL（popnote://new、popnote://open/<メモID>）からすぐ書き始められる。
+// PopNote! — 押したらポンッと出てくるクイックメモ。単独でも、Tomeletと連携しても使える。
+// ランチャーやURL（popnote://new、popnote://open/<メモID>?dataset=<キー>）からすぐ書き始められる。
 // ⌘N・⌘O・⌘T・⌘H・⌘A・⌘B・⌘U・⌘X・⌘Iはメニューへ割り当てず、画面側のショートカットへ渡す。
 private let alwaysOnTopKey = "AlwaysOnTop"
 
 @main
+@MainActor
 struct PopNoteApplication {
     static func main() {
         let application = NSApplication.shared
@@ -17,13 +18,17 @@ struct PopNoteApplication {
     }
 }
 
+@MainActor
 final class PopNoteDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, WKNavigationDelegate, WKUIDelegate {
     private var window: NSWindow!
     private var webView: WKWebView!
     private var pageHandler: PageSchemeHandler!
-    private var link: TickTockTomeLink?
-    private var pendingTarget = "new"
-    private var connected = false
+    private var router: MemoRouter!
+    private var pageLoaded = false
+    // 起動していない状態でURLから呼ばれると、applicationDidFinishLaunchingより先にapplication(_:open:)が届く。
+    // 画面ができるまでURLを預かり、起動処理の最後に開く。
+    private var launched = false
+    private var pendingURL: URL?
     private var terminating = false
     private var alwaysOnTopItem: NSMenuItem!
     private var signalSource: DispatchSourceSignal?
@@ -45,49 +50,63 @@ final class PopNoteDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, 
         source.setEventHandler { NSApplication.shared.terminate(nil) }
         source.resume()
         signalSource = source
-        do {
-            let link = try TickTockTomeLink()
-            self.link = link
-            link.connect { [weak self] result in
-                guard let self, !self.terminating else { return }
-                switch result {
-                case .success(let connection):
-                    self.pageHandler.connect(connection)
-                    self.connected = true
-                    self.webView.load(URLRequest(url: self.pageURL(self.pendingTarget)))
-                case .failure(let error):
-                    self.fail("Tick Tock Tomeに接続できませんでした", error.localizedDescription)
-                }
-            }
-        } catch {
-            fail("Tick Tock Tomeが見つかりません", error.localizedDescription)
+        launched = true
+        if let url = pendingURL {
+            pendingURL = nil
+            handle(url)
+        } else {
+            loadPage("new")
         }
     }
 
-    private func fail(_ title: String, _ detail: String) {
-        let alert = NSAlert()
-        alert.alertStyle = .critical
-        alert.messageText = title
-        alert.informativeText = detail
-        alert.runModal()
-        terminating = true
-        NSApplication.shared.terminate(nil)
+    private func loadPage(_ target: String) {
+        webView.load(URLRequest(url: pageURL(target)))
+        pageLoaded = true
     }
 
     // MARK: - URLとランチャーからの呼び出し
 
     func application(_ application: NSApplication, open urls: [URL]) {
         guard let url = urls.last, url.scheme?.lowercased() == "popnote" else { return }
-        let parts = ([url.host ?? ""] + url.pathComponents.filter { $0 != "/" }).filter { !$0.isEmpty }
-        if parts.first == "open", parts.count > 1, parts[1].range(of: "^memo-[0-9a-f-]{36}$", options: .regularExpression) != nil { open(parts[1]) }
-        else if parts.isEmpty || parts.first == "new" { open("new") }
+        guard launched else { pendingURL = url; return }
+        handle(url)
     }
 
-    private func open(_ target: String) {
+    private func handle(_ url: URL) {
+        let parts = ([url.host ?? ""] + url.pathComponents.filter { $0 != "/" }).filter { !$0.isEmpty }
+        let datasetKey = URLComponents(url: url, resolvingAgainstBaseURL: false)?.queryItems?.first { $0.name == "dataset" }?.value
+        if parts.first == "open", parts.count > 1, parts[1].range(of: "^memo-[0-9a-f-]{36}$", options: .regularExpression) != nil { open(parts[1], datasetKey: datasetKey) }
+        else if parts.isEmpty || parts.first == "new" { open("new", datasetKey: nil) }
+        else if !pageLoaded { loadPage("new") }
+    }
+
+    /// 本体のカレンダーなどから別の保存先のメモを開く場合は、先に保存先を合わせてから開く。
+    private func open(_ target: String, datasetKey: String?) {
         showWindow()
-        guard connected else { pendingTarget = target; return }
-        let script = "if (window.PopNote) await window.PopNote.openTarget(target); else location.replace(url); return true;"
-        webView.callAsyncJavaScript(script, arguments: ["target": target, "url": pageURL(target).absoluteString], in: nil, in: .page) { _ in }
+        Task { @MainActor in
+            await flushPage()
+            if let datasetKey, router.current?.key != datasetKey {
+                guard await router.switchToDataset(key: datasetKey) else {
+                    if !pageLoaded { loadPage("new") }
+                    let alert = NSAlert()
+                    alert.messageText = "このメモの保存先が見つかりません"
+                    alert.informativeText = "PopNote!の保存先に、Tomeletで開いている基準パスを選んでから、もう一度開いてください。"
+                    alert.beginSheetModal(for: window) { _ in }
+                    return
+                }
+                loadPage(target)
+                return
+            }
+            // 起動直後はまだ画面を読み込んでいないので、目的のメモを最初の画面として開く。
+            guard pageLoaded else { loadPage(target); return }
+            let script = "if (window.PopNote) await window.PopNote.openTarget(target); else location.replace(url); return true;"
+            _ = try? await webView.callAsyncJavaScript(script, arguments: ["target": target, "url": pageURL(target).absoluteString], in: nil, contentWorld: .page)
+        }
+    }
+
+    private func flushPage() async {
+        guard pageLoaded else { return }
+        _ = try? await webView.callAsyncJavaScript("if (window.PopNote) await window.PopNote.flush(); return true;", arguments: [:], in: nil, contentWorld: .page)
     }
 
     func applicationShouldHandleReopen(_ sender: NSApplication, hasVisibleWindows flag: Bool) -> Bool {
@@ -137,7 +156,8 @@ final class PopNoteDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, 
     }
 
     private func configureWindow() {
-        pageHandler = PageSchemeHandler(webRoot: Bundle.main.resourceURL!.appendingPathComponent("web", isDirectory: true))
+        router = MemoRouter(schemaDirectory: Bundle.main.resourceURL!.appendingPathComponent("schema", isDirectory: true))
+        pageHandler = PageSchemeHandler(webRoot: Bundle.main.resourceURL!.appendingPathComponent("web", isDirectory: true), router: router)
         let configuration = WKWebViewConfiguration()
         configuration.websiteDataStore = .default()
         configuration.setURLSchemeHandler(pageHandler, forURLScheme: PageSchemeHandler.scheme)
@@ -153,7 +173,6 @@ final class PopNoteDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, 
         window.center()
         window.setFrameAutosaveName("PopNoteWindow")
         applyAlwaysOnTop(UserDefaults.standard.bool(forKey: alwaysOnTopKey))
-        webView.loadHTMLString("<!doctype html><meta charset=utf-8><body style=\"font:13px -apple-system,sans-serif;color:#8a8580;display:grid;place-items:center;height:100vh;margin:0\">Tick Tock Tomeに接続しています…</body>", baseURL: nil)
         showWindow()
     }
 
@@ -178,18 +197,18 @@ final class PopNoteDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, 
     }
 
     func applicationShouldTerminate(_ sender: NSApplication) -> NSApplication.TerminateReply {
-        if terminating && !connected { return .terminateNow }
         if terminating { return .terminateLater }
         terminating = true
         var replied = false
         let reply = { [weak self] in
             guard !replied else { return }
             replied = true
-            if self?.connected == true { self?.link?.stopServerIfUnused() }
+            // 使用中の印を外し、Tomeletがこの保存先をすぐ開けるようにする。
+            self?.router.releaseLock()
             NSApplication.shared.reply(toApplicationShouldTerminate: true)
         }
         // 入力直後に閉じても、保存待ちの内容を書き込んでから終了する。
-        webView.callAsyncJavaScript("if (window.PopNote) await window.PopNote.flush(); return true;", arguments: [:], in: nil, in: .page) { _ in reply() }
+        Task { @MainActor in await flushPage(); reply() }
         DispatchQueue.main.asyncAfter(deadline: .now() + 4) { reply() }
         return .terminateLater
     }
@@ -205,9 +224,11 @@ final class PopNoteDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, 
 
     // 添付画像の「開く」は、既定のブラウザで原寸表示する。
     func webView(_ webView: WKWebView, createWebViewWith configuration: WKWebViewConfiguration, for navigationAction: WKNavigationAction, windowFeatures: WKWindowFeatures) -> WKWebView? {
-        if let url = navigationAction.request.url {
-            if let target = pageHandler.serverURL(for: url) { NSWorkspace.shared.open(target) }
-            else if url.scheme?.lowercased() == "https" { NSWorkspace.shared.open(url) }
+        guard let url = navigationAction.request.url else { return nil }
+        if url.scheme?.lowercased() == "https" { NSWorkspace.shared.open(url); return nil }
+        let parts = url.pathComponents
+        if url.scheme == PageSchemeHandler.scheme, parts.count == 6, parts[1] == "api", parts[3] == "uploads", parts[5] == "content" {
+            Task { @MainActor in if let target = await router.externalUploadURL(parts[4]) { NSWorkspace.shared.open(target) } }
         }
         return nil
     }

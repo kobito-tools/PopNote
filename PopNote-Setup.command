@@ -5,7 +5,7 @@ status=$?
 if [[ $status -eq 0 ]]; then
   echo ""
   echo "PopNote!.appを作成しました。アプリケーションフォルダへ移動し、OpenSesame!などのランチャーへ登録できます。"
-  echo "PopNote!を使う前に、Tick Tock Tomeをセットアップしておいてください。"
+  echo "Tomeletと連携する場合は、先にTomeletをセットアップしておいてください（PopNote!だけでも使えます）。"
 fi
 echo ""
 read "reply?Enterキーで閉じます..."
