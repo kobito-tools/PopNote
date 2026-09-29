@@ -9,7 +9,7 @@ Xcode Command Line Tools（`xcode-select --install`）が必要です。
 ```bash
 ./build.sh                    # フォルダ直下に PopNote!.app（ユニバーサルバイナリ）を作成
 ./tests/run.sh                # 保存先の作成からメモの読み書きまでのテスト
-./scripts/package-release.sh  # Releases 用の dist/PopNote_<版>_universal.zip（GitHub は名前の「!」を使えないため付けない） を作成
+./scripts/package-release.sh  # Releases 用の dist/PopNote_<版>_universal.dmg を作成（GitHub は名前の「!」を使えないため付けない）
 ./tests/demo/record.sh        # README のデモGIF（docs/images/demo.gif）を撮り直す（ffmpeg が必要）
 ```
 
