@@ -15,7 +15,7 @@ PopNote! は、押したらポンッと出てきてすぐに書ける macOS 用�
 
 ## ダウンロード
 
-[Releases](../../releases/latest) ページから `PopNote!_x.y.z_universal.zip` をダウンロードしてください。`x.y.z` にはバージョン番号が入ります。
+[Releases](../../releases/latest) ページから `PopNote_x.y.z_universal.zip` をダウンロードしてください。`x.y.z` にはバージョン番号が入ります。
 
 ## インストール
 
