@@ -5,7 +5,7 @@ set -euo pipefail
 cd "${0:A:h}"
 
 APP_NAME="PopNote!"
-VERSION="0.2.0"
+VERSION="0.2.1"
 BUILD_DIR=".build"
 STAGE="$BUILD_DIR/$APP_NAME.app"
 CONTENTS="$STAGE/Contents"

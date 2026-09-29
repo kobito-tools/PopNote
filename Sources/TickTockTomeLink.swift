@@ -29,13 +29,19 @@ final class TickTockTomeLink {
     init?() {
         guard let appURL = NSWorkspace.shared.urlForApplication(withBundleIdentifier: Self.mainAppBundleIdentifier),
               let bundle = Bundle(url: appURL),
-              let root = bundle.object(forInfoDictionaryKey: "TickTockTomeProjectRoot") as? String,
-              let node = bundle.object(forInfoDictionaryKey: "TickTockTomeNodePath") as? String,
-              FileManager.default.isExecutableFile(atPath: node),
-              FileManager.default.fileExists(atPath: URL(fileURLWithPath: root).appendingPathComponent("scripts/companion-connect.js").path)
+              let root = Self.path(bundle, "TickTockTomeProjectRoot", isDirectory: true),
+              let node = Self.path(bundle, "TickTockTomeNodePath", isDirectory: false),
+              FileManager.default.isExecutableFile(atPath: node.path),
+              FileManager.default.fileExists(atPath: root.appendingPathComponent("scripts/companion-connect.js").path)
         else { return nil }
-        projectRoot = URL(fileURLWithPath: root, isDirectory: true)
-        nodeExecutable = URL(fileURLWithPath: node)
+        projectRoot = root
+        nodeExecutable = node
+    }
+
+    /// Tomelet-Setupで作ったTomelet.appは絶対パス、配布用（dmg）のTomelet.appは.appからの相対パスを持つ。
+    private static func path(_ bundle: Bundle, _ key: String, isDirectory: Bool) -> URL? {
+        guard let value = bundle.object(forInfoDictionaryKey: key) as? String, !value.isEmpty else { return nil }
+        return value.hasPrefix("/") ? URL(fileURLWithPath: value, isDirectory: isDirectory) : bundle.bundleURL.appendingPathComponent(value, isDirectory: isDirectory)
     }
 
     static var isRunning: Bool {
