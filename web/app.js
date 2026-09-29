@@ -683,6 +683,25 @@ async function initialize() {
   if (!state.destinations?.current) { state.destinationPrompted = true; toggleMode("destination"); }
 }
 
-window.PopNote = Object.freeze({ flush, openTarget });
+// Pastephant から届いたクリップ（文字と画像）を入れる。append なら開いているメモの末尾、でなければ新しいメモ。
+async function importClip(clip) {
+  if (clip.append) await flush(); else await openTarget("new");
+  closeMode(false);
+  const parts = String(clip.text || "").split("\n").map((line) => line ? `<div>${esc(line)}</div>` : "<div><br></div>");
+  try {
+    for (const image of clip.images || []) {
+      const bytes = Uint8Array.from(atob(image.base64), (character) => character.charCodeAt(0));
+      const upload = await uploadImage(new File([bytes], image.name, { type: image.mimeType }));
+      parts.push(`<div><img src="/api/v1/uploads/${encodeURIComponent(upload.id)}/content" alt=""></div>`);
+    }
+  } catch (error) { if (error.detail?.destinationRequired) toggleMode("destination"); setStatus(error.message, true); }
+  if (!parts.length || (parts.length === 1 && parts[0] === "<div><br></div>")) return;
+  if (clip.append && body.textContent.trim()) body.insertAdjacentHTML("beforeend", "<div><br></div>");
+  body.insertAdjacentHTML("beforeend", parts.join(""));
+  changed();
+  focusBodyEnd();
+}
+
+window.PopNote = Object.freeze({ flush, openTarget, importClip });
 initialize();
 })();

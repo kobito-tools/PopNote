@@ -77,6 +77,7 @@ OpenSesame! などのランチャーには `PopNote!.app` を登録します。U
 |---|---|
 | `popnote://new` | 新しいメモを開く |
 | `popnote://open/<メモID>?dataset=<データセットキー>` | 指定したメモを開く（保存先が違えば切り替えてから開く） |
+| `popnote://import?file=<ファイル>` | [Pastephant](https://github.com/kobito-tools/Pastephant) から送られたクリップ（文字と画像）をメモに入れる。Pastephant が一時フォルダに置いたファイルだけを読み、読んだら消します |
 
 すでに起動している場合は、同じウィンドウで切り替えます。
 

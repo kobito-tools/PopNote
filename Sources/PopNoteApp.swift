@@ -3,6 +3,7 @@ import WebKit
 
 // PopNote! — 押したらポンッと出てくるクイックメモ。単独でも、Tomeletと連携しても使える。
 // ランチャーやURL（popnote://new、popnote://open/<メモID>?dataset=<キー>）からすぐ書き始められる。
+// Pastephant からは popnote://import?file=<一時ファイル> で、コピーした文字と画像を受け取る。
 // ⌘N・⌘O・⌘T・⌘H・⌘A・⌘B・⌘U・⌘X・⌘Iはメニューへ割り当てず、画面側のショートカットへ渡す。
 private let alwaysOnTopKey = "AlwaysOnTop"
 
@@ -75,6 +76,10 @@ final class PopNoteDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, 
     private func handle(_ url: URL) {
         let parts = ([url.host ?? ""] + url.pathComponents.filter { $0 != "/" }).filter { !$0.isEmpty }
         let datasetKey = URLComponents(url: url, resolvingAgainstBaseURL: false)?.queryItems?.first { $0.name == "dataset" }?.value
+        if parts.first == "import" {
+            importClip(URLComponents(url: url, resolvingAgainstBaseURL: false)?.queryItems?.first { $0.name == "file" }?.value)
+            return
+        }
         if parts.first == "open", parts.count > 1, parts[1].range(of: "^memo-[0-9a-f-]{36}$", options: .regularExpression) != nil { open(parts[1], datasetKey: datasetKey) }
         else if parts.isEmpty || parts.first == "new" { open("new", datasetKey: nil) }
         else if !pageLoaded { loadPage("new") }
@@ -101,6 +106,24 @@ final class PopNoteDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, 
             guard pageLoaded else { loadPage(target); return }
             let script = "if (window.PopNote) await window.PopNote.openTarget(target); else location.replace(url); return true;"
             _ = try? await webView.callAsyncJavaScript(script, arguments: ["target": target, "url": pageURL(target).absoluteString], in: nil, contentWorld: .page)
+        }
+    }
+
+    /// Pastephant が一時フォルダ（$TMPDIR/Pastephant-PopNote/）に置いたクリップ（JSON）を読み、メモに入れる。
+    /// 読んだファイルはすぐ消す。append なら開いているメモの末尾、でなければ新しいメモに入れる。
+    private func importClip(_ path: String?) {
+        let inbox = FileManager.default.temporaryDirectory.appendingPathComponent("Pastephant-PopNote", isDirectory: true).standardizedFileURL.resolvingSymlinksInPath()
+        guard let path else { return }
+        let file = URL(fileURLWithPath: path).standardizedFileURL.resolvingSymlinksInPath()
+        guard file.deletingLastPathComponent().path == inbox.path, file.pathExtension == "json", let data = try? Data(contentsOf: file) else { return }
+        try? FileManager.default.removeItem(at: file)
+        guard let clip = try? JSONSerialization.jsonObject(with: data) as? [String: Any], clip["format"] as? String == "pastephant-clip" else { return }
+        showWindow()
+        if !pageLoaded { loadPage("new") }
+        Task { @MainActor in
+            // 画面の準備ができるまで待ってから渡す。
+            let script = "for (let i = 0; i < 100 && !window.PopNote; i++) await new Promise((resolve) => setTimeout(resolve, 100)); if (!window.PopNote) return false; await window.PopNote.importClip(clip); return true;"
+            _ = try? await webView.callAsyncJavaScript(script, arguments: ["clip": clip], in: nil, contentWorld: .page)
         }
     }
 
